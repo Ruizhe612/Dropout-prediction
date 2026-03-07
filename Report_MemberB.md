@@ -166,8 +166,8 @@ Kolmogorov-Smirnov tests on key covariates confirm that treated and control grou
 
 | Covariate | KS Statistic | p-value |
 |:---|:---:|:---:|
-| Previous qualification (grade) | **[X.XXX]** | **[X.XXe-XX]** |
-| Age at enrollment | **[X.XXX]** | **[X.XXe-XX]** |
+| Previous qualification (grade) | 0.074 | 2.46e-04 |
+| Age at enrollment | 0.236 | 5.07e-41 |
 
 Significant p-values (p < 0.05) directly violate the exchangeability assumption required for naive comparison. Causal adjustment is necessary.
 
@@ -181,24 +181,26 @@ Significant p-values (p < 0.05) directly violate the exchangeability assumption 
 
 | Step | Value |
 |:---|:---|
-| Caliper | **[X.XXXX]** |
-| Students in common support | **[X,XXX]** / 4,424 |
-| Matched pairs | **[XXX]** |
+| Caliper (0.2 × SD of PS) | 0.0349 |
+| PS range — treated | [0.013, 0.768] |
+| PS range — control | [0.002, 0.753] |
+| Students in common support | 4,362 / 4,424 |
+| Matched pairs | 1,097 / 1,097 |
 
 **Covariate balance (Love Plot):** After matching, all key covariates achieve |SMD| < 0.1, confirming that matched treated/control students are comparable on observed pre-treatment characteristics.
 
-| | Mean |SMD| Before | Mean |SMD| After |
+| | Mean \|SMD\| Before | Mean \|SMD\| After |
 |:---|:---:|:---:|
-| All balance features | **[X.XXX]** | **[X.XXX]** |
+| All balance features | 0.231 | 0.023 |
 
 **PSM ATE estimate** (bootstrap CI, 2,000 replications):
 
 | Quantity | Value |
 |:---|:---|
-| ATE | **[+/−X.XXXX]** (**[+/−X.XX] pp**) |
-| 95% Bootstrap CI | **[[+/−X.XXXX], [+/−X.XXXX]]** |
-| Bootstrap SE | **[X.XXXX]** |
-| p-value | **[X.XXXX]** |
+| ATE | −0.0647 (**−6.47 pp**) |
+| 95% Bootstrap CI | [−0.0912, −0.0383] |
+| Bootstrap SE | 0.0138 |
+| p-value | < 0.0001 (significant) |
 
 ### 3.4 Method 2 — Double Machine Learning (DML)
 
@@ -247,7 +249,7 @@ DML residuals $\tilde{Y}$, $\tilde{T}$ from Section 3.4 are reused — no additi
 | Method | ATE (pp) | 95% CI | p-value | Confounder Adjustment |
 |:---|:---:|:---:|:---:|:---|
 | Naive Comparison | −26.51 | N/A | N/A | None |
-| PSM | **[X.XX]** | **[[X.XX], [X.XX]]** | **[X.XXXX]** | Propensity score (logistic) |
+| PSM | **−6.47** | **[−9.12, −3.83]** | **< 0.0001** | Propensity score (logistic) |
 | **DML** | **−4.43** | **[−6.79, −2.07]** | **0.0002** | ML partialling-out (GB + 5-fold CV) |
 
 The naive gap is inflated ~6× by selection bias. After causal adjustment, both PSM and DML converge on a significant but substantially smaller effect. Convergence between two methodologically distinct estimators strengthens the credibility of the causal claim.
@@ -377,5 +379,3 @@ for col, label in [('Gender', 'Gender'), ('Debtor', 'In Debt')]:
 - Comparing ATE across groups bridges the predictive model (Member B, `Advanced_Modeling.ipynb`) and the policy model (Member B, `Causal_Analysis.ipynb`) for Member C's final policy recommendations.
 
 ---
-
-*Numbers marked **[X.XXXX]** require running the respective notebook cells to obtain actual computed values. All other numeric results are directly from notebook output cells as recorded in the committed version.*
