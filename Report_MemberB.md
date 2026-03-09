@@ -6,6 +6,39 @@
 
 ---
 
+## Section 0 — Dataset Description
+
+### 0.1 What Is This Dataset?
+
+The dataset used in this project is the **"Predict students' dropout and academic success"** dataset from the UCI Machine Learning Repository (Dataset ID: 697). It was collected from a Portuguese higher education institution and covers students enrolled in various undergraduate degrees over several academic years.
+
+The core goal of the dataset is to support **early identification of students at risk of dropping out**, so that universities can intervene in time with targeted support.
+
+### 0.2 Dataset Contents
+
+The dataset contains **4,424 students** described by **36 features** spanning four categories:
+
+| Category | Example Features |
+|:---|:---|
+| **Demographics** | Age at enrollment, Gender, International student, Marital status, Nationality |
+| **Socioeconomic background** | Parents' education level and occupation, Debtor status, Tuition fees up-to-date |
+| **Academic history at enrollment** | Previous qualification (grade), Admission grade, Scholarship holder, Curricular units enrolled/approved in 1st and 2nd semester |
+| **Macroeconomic context** | Unemployment rate, Inflation rate, GDP (at the time of enrollment) |
+
+The **target variable** has three classes:
+
+| Class | Count | Meaning |
+|:---|:---:|:---|
+| **Dropout** | ~1,421 (32%) | Student left the program without graduating |
+| **Enrolled** | ~794 (18%) | Student is still currently enrolled |
+| **Graduate** | ~2,209 (50%) | Student successfully completed the program |
+
+### 0.3 Why This Dataset Matters
+
+Student dropout is a major challenge for higher education institutions — it represents a loss for both the student and the institution. By predicting dropout risk early (e.g., after Semester 1 results become available), universities can direct limited resources (counseling, financial aid, tutoring) toward students who need them most. This dataset provides a realistic, multi-class setting for building and evaluating such early-warning systems.
+
+---
+
 ## Section 1 — Overview
 
 Member B's work builds directly on the preprocessed data delivered by Member A and extends the project in two directions:
@@ -20,6 +53,22 @@ The outputs of `Advanced_Modeling.ipynb` feed directly into Member C's SHAP expl
 ---
 
 ## Section 2 — Advanced Modeling (`Advanced_Modeling.ipynb`)
+
+### 2.0 Methods Overview
+
+The advanced modeling pipeline applies two gradient-boosted tree algorithms and uses Bayesian hyperparameter optimization to find their best configurations:
+
+| Component | Method | Purpose |
+|:---|:---|:---|
+| **Primary models** | CatBoost, XGBoost | Gradient-boosted decision tree ensembles for multi-class classification |
+| **Hyperparameter tuning** | Optuna with TPE (Tree-structured Parzen Estimator) | Bayesian optimization over the hyperparameter search space |
+| **Evaluation metric** | Weighted F1-score | Accounts for class imbalance across Dropout / Enrolled / Graduate |
+| **Anti-leakage design** | Stratified internal validation split (20%) | Test set is never seen during tuning; only used for final reporting |
+| **Model interpretation** | Feature importance, confusion matrices, multi-class ROC-AUC | Understand what drives predictions and where errors occur |
+
+**CatBoost** is a gradient-boosted tree library that handles categorical features natively using ordered target encoding, which reduces overfitting compared to standard label encoding. **XGBoost** is a highly optimized regularized gradient boosting framework with broad adoption in structured-data tasks. Both are strong baselines for tabular classification.
+
+**Optuna (TPE):** Rather than exhaustive grid search, Optuna's Tree-structured Parzen Estimator models the objective function as a probabilistic surrogate, directing new trials toward regions of the hyperparameter space that are likely to improve the metric. This is substantially more efficient than random search, especially with 40 trials per model.
 
 ### 2.1 Data Source
 
@@ -138,6 +187,23 @@ The notebook produces four sets of plots:
 ---
 
 ## Section 3 — Causal Inference (`Causal_Analysis.ipynb`)
+
+### 3.0 Methods Overview
+
+The causal analysis uses three layered methods to answer whether scholarships *causally* reduce dropout risk, not merely correlate with lower dropout rates:
+
+| Layer | Method | Key Property |
+|:---|:---|:---|
+| **Baseline** | Naive comparison + KS test | Quantifies raw gap and confirms selection bias |
+| **Method 1** | Propensity Score Matching (PSM) | Balances observed confounders by matching treated/control students |
+| **Method 2** | Double Machine Learning (DML) | Partialling-out with ML; Neyman-orthogonal ATE estimator |
+| **Method 3** | R-learner CATE | Heterogeneous treatment effects — who benefits most? |
+
+**Why causal methods?** The naive dropout-rate gap between scholarship holders (12.2%) and non-holders (38.7%) is 26.5 percentage points. However, this gap could be entirely explained by *selection bias*: universities award scholarships to academically stronger students who would have been less likely to drop out regardless. Kolmogorov-Smirnov tests confirm that the two groups differ significantly on pre-treatment covariates (e.g., age at enrollment: KS stat = 0.236, p = 5.07e-41), violating the exchangeability assumption required for naive comparison. Causal adjustment is necessary.
+
+**Key identifying assumption (Unconfoundedness):** All three methods assume that, conditional on the observed covariates $X$, treatment assignment is as good as random: $T \perp (Y(0), Y(1)) \mid X$. In other words, there are no *unobserved* confounders. This is a strong but standard assumption in observational causal inference.
+
+**Data note:** Causal analysis uses the **raw (unprocessed)** UCI data (4,424 students) rather than the SMOTE-balanced training set. SMOTE synthetically replicates minority-class observations, which would distort propensity score estimation and causal effect estimates.
 
 ### 3.1 Research Question
 
